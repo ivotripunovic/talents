@@ -1,0 +1,133 @@
+# Overview
+A global web-based platform for young football (soccer) talents, connecting players (and their parents), academies, scouts, trainers, managers, clubs, and fans. The platform enables discovery, tracking, and support for young players, and provides tools for clubs and professionals to find and monitor talent. The system is designed to be scalable, secure, and easily upgradeable for future features.
+
+# Core Features
+- **Role-Based Registration & Profiles**
+  - Exclusive roles: Player, Coach, Scout, Manager, Trainer, Club, Fan
+  - Parents act as proxies for player accounts (no separate parent role)
+  - Role-based profile fields and permissions
+  - Referral system: All users can generate referral links to invite others and earn points for future rewards/premium membership (future-proofed in database design)
+
+- **Player Profiles**
+  - Fields: Country, city, age, height, weight, preferred foot, positions (selectable on a football field UI, multiple allowed except for goalkeepers), languages spoken, current club, achievements, medical info, social links
+  - Verification: Age and achievements can be verified via a link to the official FIFA "COMET Football" app or similar
+  - Parental consent required for underage users
+
+- **Video Uploads**
+  - Formats: mp4, mov
+  - Limits: Free users have limits on size, duration, and number of uploads; premium users have higher limits
+  - Moderation: All videos require moderator approval before being posted
+  - Storage: Initially on the web server; later, videos may be published to YouTube (users grant rights to publish)
+
+- **Messaging**
+  - One-to-one messaging only (no group chats)
+  - Platform can send broadcast messages to all users
+  - Limits: Free users have limited messages to certain roles; premium users have higher limits (numbers easily adjustable)
+  - Blocking/Reporting: Users can block others (blocked users cannot send messages until unblocked); users can report abuse; reports are moderated. Abuse of reporting leads to escalating bans (2 weeks, 3 months, permanent)
+
+- **Search & Discovery**
+  - Advanced filters for scouts/trainers/managers (age, country, position, skill ratings, etc.)
+  - Watchlist feature for users to track interesting players
+
+- **Premium Features**
+  - All users receive 3 months of free premium membership at launch
+  - Premium features: Increased upload/messaging limits, possibly profile highlighting, analytics, early access to features (to be decided after the initial period)
+
+- **Security & Privacy**
+  - Profiles are public by default; users can opt to make their profile private
+  - GDPR compliance for EU users
+  - Parental consent for underage users
+
+- **Training Plans**
+  - Users can tailor their own training plans from the start
+
+# User Experience
+- **User Personas**
+  - Young players (and their parents)
+  - Coaches, scouts, managers, trainers, club officials
+  - Fans
+
+- **Key User Flows**
+  - Registration and role selection
+  - Profile creation and verification
+  - Video upload and moderation
+  - Messaging and blocking/reporting
+  - Search and watchlist management
+  - Referral and reward system (future)
+
+- **UI/UX Considerations**
+  - Responsive web app, mobile-friendly
+  - Intuitive football field UI for position selection
+  - Clear distinction between free and premium features
+  - Easy navigation between user roles and features
+
+# Technical Architecture
+- **System Components**
+  - Django backend (Python)
+  - PostgreSQL database
+  - Frontend: Django templates (MVP), with future option for React or similar SPA
+  - Media storage: Local server (MVP), with future migration to cloud/YouTube
+  - Email service for verification, notifications, and parental consent
+  - Role-based access control
+  - Moderation dashboard for video/content approval and abuse reports
+
+- **Data Models**
+  - User (with role, profile, referral, premium status, parental consent)
+  - PlayerProfile (with all player-specific fields)
+  - Video (with status, moderation, storage info)
+  - Message (with sender, recipient, status, block info)
+  - Watchlist
+  - TrainingPlan
+  - Report/Ban
+
+- **APIs and Integrations**
+  - COMET Football (for verification)
+  - Email provider (SendGrid, SMTP, etc.)
+  - YouTube API (future)
+
+- **Infrastructure Requirements**
+  - Scalable web server (Docker-ready)
+  - Secure media storage
+  - GDPR-compliant data handling
+
+# Development Roadmap
+- **MVP Requirements**
+  - Role-based registration and login
+  - Player profile creation and verification
+  - Video upload with moderation
+  - One-to-one messaging with limits and blocking/reporting
+  - Search and watchlist
+  - Training plan creation
+  - Admin/moderator dashboard
+  - Premium membership logic (3 months free, then upgrade path)
+  - GDPR and parental consent flows
+
+- **Future Enhancements**
+  - Referral and reward system
+  - Voting system for videos
+  - Multi-language support
+  - Cloud/YouTube video storage
+  - Advanced analytics and reporting
+  - Event management, live streaming, API access
+  - Ads and sponsorship modules
+
+# Logical Dependency Chain
+- Foundation: User registration, role management, and authentication
+- Player profile and parental consent flows
+- Video upload and moderation
+- Messaging and blocking/reporting
+- Search and watchlist
+- Training plans
+- Premium logic
+- Admin/moderator tools
+- Future: Referral/rewards, voting, analytics, events, multi-language, cloud integrations
+
+# Risks and Mitigations
+- **Technical challenges:** Video storage and moderation at scale (mitigate by starting with local storage, planning for cloud migration)
+- **MVP scoping:** Focus on core flows, defer voting/referral to later
+- **Resource constraints:** Modular architecture for incremental development
+- **Compliance:** GDPR and parental consent built-in from start
+
+# Appendix
+- Research: COMET Football integration, GDPR requirements, YouTube API
+- Technical specs: Django, SQlite, PostgreSQL, Docker, REST API best practices 
