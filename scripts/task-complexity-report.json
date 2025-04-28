@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "generatedAt": "2025-04-28T19:22:41.653Z",
+    "tasksAnalyzed": 9,
+    "thresholdScore": 6,
+    "projectName": "Your Project Name",
+    "usedResearch": false
+  },
+  "complexityAnalysis": [
+    {
+      "taskId": 2,
+      "taskTitle": "Implement Role-Based User Authentication System",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the implementation of a Django role-based authentication system with 7 different user roles, custom registration flows, parent-child relationships, and email verification into 6 distinct subtasks with clear deliverables.",
+      "reasoning": "This task involves extending Django's authentication system with multiple roles, custom validation, parent-child relationships, and email verification. The complexity is high due to the need to handle different registration flows for 7 distinct user roles and implement secure authentication practices."
+    },
+    {
+      "taskId": 3,
+      "taskTitle": "Develop Player Profile Management",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Divide the player profile management system implementation into 5 subtasks, covering the PlayerProfile model with numerous fields, interactive position selection UI, parental consent workflow, verification system, and privacy controls.",
+      "reasoning": "This task requires creating a comprehensive data model with many fields, implementing a specialized UI for position selection, building verification workflows, and integrating with external systems. The parental consent mechanism adds additional complexity."
+    },
+    {
+      "taskId": 4,
+      "taskTitle": "Build Video Upload and Moderation System",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the video upload and moderation system into 5 subtasks covering the video model creation, file upload with validation, size/quantity limits based on user status, moderation workflow, and secure storage configuration.",
+      "reasoning": "This task involves handling file uploads with validation, implementing different limits based on user status, creating a moderation workflow, and ensuring secure storage. The combination of frontend and backend work with security considerations increases complexity."
+    },
+    {
+      "taskId": 5,
+      "taskTitle": "Implement Messaging System",
+      "complexityScore": 6,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Divide the messaging system implementation into 4 subtasks covering the message model design, one-to-one messaging UI, user blocking functionality, and the abuse reporting system with moderation workflow.",
+      "reasoning": "This task requires creating a messaging system with blocking and reporting features. While messaging is a common feature, the additional requirements for limits based on user status, blocking functionality, and abuse reporting increase the complexity."
+    },
+    {
+      "taskId": 6,
+      "taskTitle": "Develop Search and Watchlist Features",
+      "complexityScore": 6,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Break down the search and watchlist feature implementation into 4 subtasks covering advanced search with multiple filters, database optimization with proper indexing, watchlist model and UI, and role-specific search capabilities.",
+      "reasoning": "This task involves creating an advanced search system with multiple filters, optimizing database queries, implementing watchlists, and handling role-specific search capabilities. The database optimization requirements and role-specific features add complexity."
+    },
+    {
+      "taskId": 7,
+      "taskTitle": "Create Training Plan System",
+      "complexityScore": 5,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Divide the training plan system implementation into 4 subtasks covering the TrainingPlan model design, plan creation UI, assignment functionality, and progress tracking features.",
+      "reasoning": "This task requires creating a system for managing training plans with exercises, schedules, and goals. While complex, it's more straightforward than some other tasks as it doesn't involve as many security or integration concerns."
+    },
+    {
+      "taskId": 8,
+      "taskTitle": "Implement Premium Membership Logic",
+      "complexityScore": 5,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Break down the premium membership system implementation into 4 subtasks covering user model extension, free trial implementation, upgrade paths with payment integration placeholders, and feature limits based on membership status.",
+      "reasoning": "This task involves extending the user model, implementing trial periods, creating upgrade paths, and configuring feature limits. The complexity is moderate as it requires changes across multiple features but doesn't involve complex algorithms or security concerns."
+    },
+    {
+      "taskId": 9,
+      "taskTitle": "Develop Admin and Moderation Dashboard",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Divide the admin and moderation dashboard implementation into 5 subtasks covering custom Django admin views, abuse report review workflow, user management tools, system metrics dashboard, and content moderation tools.",
+      "reasoning": "This task requires extending Django's admin interface with custom views and workflows for moderation, user management, and system monitoring. The breadth of functionality and integration with multiple system components increases complexity."
+    },
+    {
+      "taskId": 10,
+      "taskTitle": "Implement GDPR Compliance and Security Features",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the GDPR compliance and security implementation into 6 subtasks covering privacy policy/terms of service, data export functionality, deletion workflows, cookie consent, security headers/CSRF protection, and audit logging.",
+      "reasoning": "This task involves implementing comprehensive GDPR compliance and security features across the entire platform. The complexity is high due to the need to ensure proper data handling, consent mechanisms, and security practices throughout all components of the system."
+    }
+  ]
+}
