@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView, TemplateView, UpdateView
@@ -13,8 +13,13 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import (
     ScoutProfile, PlayerProfile, CoachProfile, ManagerProfile,
-    TrainerProfile, ClubProfile, FanProfile
+    TrainerProfile, ClubProfile, FanProfile, EmailVerificationToken
 )
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.contrib.sites.shortcuts import get_current_site
+from django.conf import settings
 
 User = get_user_model()
 
@@ -69,10 +74,41 @@ class RoleSelectionView(TemplateView):
         ]
         return context
 
-class PlayerRegistrationView(CreateView):
+class BaseRegistrationView(CreateView):
+    success_url = reverse_lazy('accounts:registration_success')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        user = self.object
+        
+        # Generate verification token
+        token = EmailVerificationToken.generate_token(user)
+        
+        # Send verification email
+        current_site = get_current_site(self.request)
+        subject = 'Verify your email address'
+        html_message = render_to_string('accounts/email/verify_email.html', {
+            'user': user,
+            'domain': current_site.domain,
+            'token': token.token,
+        })
+        plain_message = strip_tags(html_message)
+        
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        # Don't log in the user until email is verified
+        return response
+
+class PlayerRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/player.html'
     form_class = PlayerRegistrationForm
-    success_url = reverse_lazy('accounts:registration_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -105,63 +141,56 @@ class PlayerRegistrationView(CreateView):
                 user.player_profile.parent_guardian = parent_user
                 user.player_profile.save()
         
-        login(self.request, user)
         return response
 
-class CoachRegistrationView(CreateView):
+class CoachRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/coach.html'
     form_class = CoachRegistrationForm
-    success_url = reverse_lazy('accounts:registration_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
         login(self.request, self.object)
         return response
 
-class ScoutRegistrationView(CreateView):
+class ScoutRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/scout.html'
     form_class = ScoutRegistrationForm
-    success_url = reverse_lazy('accounts:registration_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
         login(self.request, self.object)
         return response
 
-class ManagerRegistrationView(CreateView):
+class ManagerRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/manager.html'
     form_class = ManagerRegistrationForm
-    success_url = reverse_lazy('accounts:registration_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
         login(self.request, self.object)
         return response
 
-class TrainerRegistrationView(CreateView):
+class TrainerRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/trainer.html'
     form_class = TrainerRegistrationForm
-    success_url = reverse_lazy('accounts:registration_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
         login(self.request, self.object)
         return response
 
-class ClubRegistrationView(CreateView):
+class ClubRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/club.html'
     form_class = ClubRegistrationForm
-    success_url = reverse_lazy('accounts:registration_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
         login(self.request, self.object)
         return response
 
-class FanRegistrationView(CreateView):
+class FanRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/fan.html'
     form_class = FanRegistrationForm
-    success_url = reverse_lazy('accounts:registration_success')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -169,7 +198,7 @@ class FanRegistrationView(CreateView):
         return response
 
 class RegistrationSuccessView(TemplateView):
-    template_name = 'accounts/registration/success.html'
+    template_name = 'accounts/registration/verification_sent.html'
 
 @login_required
 def profile_view(request):
@@ -296,3 +325,25 @@ class FanProfileUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, 'Profile updated successfully.')
         return super().form_valid(form)
+
+def verify_email(request, token):
+    verification = get_object_or_404(EmailVerificationToken, token=token)
+    
+    if verification.is_valid():
+        user = verification.user
+        user.is_active = True
+        user.email_verified = True
+        user.save()
+        
+        verification.is_used = True
+        verification.save()
+        
+        login(request, user)
+        messages.success(request, 'Your email has been verified successfully!')
+        return redirect('accounts:profile')
+    else:
+        if verification.is_used:
+            messages.error(request, 'This verification link has already been used.')
+        else:
+            messages.error(request, 'This verification link has expired.')
+        return redirect('accounts:login')

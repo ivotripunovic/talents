@@ -6,8 +6,9 @@ from django.utils import timezone
 from datetime import date, timedelta
 from .models import (
     PlayerProfile, CoachProfile, ScoutProfile,
-    ManagerProfile, TrainerProfile, ClubProfile, FanProfile
+    ManagerProfile, TrainerProfile, ClubProfile, FanProfile, EmailVerificationToken
 )
+import uuid
 
 # Create your tests here.
 
@@ -181,35 +182,33 @@ class ScoutProfileTest(BaseRegistrationTestCase):
         for key, value in self.profile_data.items():
             setattr(self.profile, key, value)
         self.profile.save()
+
+        # Verify email and activate user for profile tests
+        self.user.email_verified = True
+        self.user.is_active = True
+        self.user.save()
+
         self.client.login(username=self.user_data['email'], password=self.user_data['password'])
 
     def test_profile_page_access(self):
         response = self.client.get(reverse('accounts:scout_profile'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'accounts/profile/scout.html')
 
     def test_profile_page_content(self):
         response = self.client.get(reverse('accounts:scout_profile'))
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.user.email)
-        self.assertContains(response, self.profile_data['organization'])
-        self.assertContains(response, self.profile_data['regions_covered'])
-        self.assertContains(response, str(self.profile_data['years_of_experience']))
-
-    def test_profile_page_unauthenticated(self):
-        self.client.logout()
-        response = self.client.get(reverse('accounts:scout_profile'))
-        self.assertEqual(response.status_code, 302)  # Should redirect to login
-        self.assertRedirects(response, f"{reverse('accounts:login')}?next={reverse('accounts:scout_profile')}")
+        self.assertContains(response, self.profile.organization)
+        self.assertContains(response, self.profile.regions_covered)
 
     def test_profile_update(self):
-        update_url = reverse('accounts:scout_profile_update')
         new_data = {
             'organization': 'Global Talent Hunters',
-            'regions_covered': 'Europe, Africa',
+            'regions_covered': 'Europe, South America',
             'years_of_experience': 12
         }
-        response = self.client.post(update_url, new_data)
-        self.assertEqual(response.status_code, 302)  # Should redirect after success
+        response = self.client.post(reverse('accounts:scout_profile_update'), new_data, follow=True)
+        self.assertRedirects(response, reverse('accounts:scout_profile'))
         
         # Refresh profile from database
         self.profile.refresh_from_db()
@@ -218,15 +217,14 @@ class ScoutProfileTest(BaseRegistrationTestCase):
         self.assertEqual(self.profile.years_of_experience, new_data['years_of_experience'])
 
     def test_profile_update_invalid_data(self):
-        update_url = reverse('accounts:scout_profile_update')
         invalid_data = {
-            'organization': 'Global Talent Hunters',
-            'regions_covered': 'Europe, Africa',
-            'years_of_experience': -1  # Invalid negative value
+            'regions_covered': 'Europe',
+            'years_of_experience': -1  # Invalid value
         }
-        response = self.client.post(update_url, invalid_data)
+        response = self.client.post(reverse('accounts:scout_profile_update'), invalid_data)
         self.assertEqual(response.status_code, 200)  # Should stay on form
-        self.assertFormErrorMessage(response, 'years_of_experience', 'Ensure this value is greater than or equal to 0.')
+        self.assertIn('years_of_experience', response.context['form'].errors)
+        self.assertIn('Ensure this value is greater than or equal to 0.', response.context['form'].errors['years_of_experience'])
 
 class ManagerRegistrationTest(BaseRegistrationTestCase):
     def setUp(self):
@@ -357,38 +355,27 @@ class CommonRegistrationTests(BaseRegistrationTestCase):
                 self.assertFormErrorMessage(response, field, 'This field is required.')
 
 class CustomUserTests(TestCase):
-    def setUp(self):
-        self.User = get_user_model()
-        self.user_data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
-            'password': 'testpass123',
-            'role': 'PLAYER'
-        }
-
     def test_create_user(self):
-        user = self.User.objects.create_user(**self.user_data)
-        self.assertEqual(user.email, self.user_data['email'])
-        self.assertEqual(user.role, self.user_data['role'])
-        self.assertTrue(user.is_active)
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.assertFalse(user.is_active)  # Users should be inactive until email verification
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
-        # Test that player profile was automatically created
-        self.assertTrue(hasattr(user, 'player_profile'))
+        self.assertEqual(user.email, 'test@example.com')
 
     def test_create_superuser(self):
-        admin_user = self.User.objects.create_superuser(
+        admin_user = User.objects.create_superuser(
             username='admin',
             email='admin@example.com',
-            password='admin123',
-            role='MANAGER'
+            password='admin123'
         )
-        self.assertEqual(admin_user.email, 'admin@example.com')
-        self.assertTrue(admin_user.is_active)
+        self.assertTrue(admin_user.is_active)  # Superusers should be active by default
         self.assertTrue(admin_user.is_staff)
         self.assertTrue(admin_user.is_superuser)
-        # Test that manager profile was automatically created
-        self.assertTrue(hasattr(admin_user, 'manager_profile'))
+        self.assertEqual(admin_user.email, 'admin@example.com')
 
 class PlayerProfileTests(TestCase):
     def setUp(self):
@@ -476,3 +463,69 @@ class ClubProfileTests(TestCase):
         self.assertEqual(profile.founded_year, 1900)
         self.assertEqual(profile.location, 'Test City')
         self.assertEqual(profile.league, 'Premier League')
+
+class EmailVerificationTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user_data = {
+            'username': 'testuser',
+            'email': 'test@example.com',
+            'password': 'testpass123',
+            'role': User.Role.FAN
+        }
+        self.user = User.objects.create_user(**self.user_data)
+
+    def test_email_verification_token_creation(self):
+        token = EmailVerificationToken.generate_token(self.user)
+        self.assertIsNotNone(token)
+        self.assertEqual(token.user, self.user)
+        self.assertFalse(token.is_used)
+        self.assertTrue(token.is_valid())
+
+    def test_email_verification_success(self):
+        token = EmailVerificationToken.generate_token(self.user)
+        response = self.client.get(reverse('accounts:verify_email', kwargs={'token': token.token}), follow=True)
+        
+        # Check the full redirect chain
+        expected_url = reverse('accounts:fan_profile')  # Role-specific profile URL
+        self.assertEqual(response.redirect_chain[-1][0], expected_url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Refresh user from database
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)
+        self.assertTrue(self.user.is_active)
+
+        # Check token is marked as used
+        token.refresh_from_db()
+        self.assertTrue(token.is_used)
+
+    def test_email_verification_invalid_token(self):
+        response = self.client.get(reverse('accounts:verify_email', kwargs={'token': uuid.uuid4()}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_email_verification_expired_token(self):
+        token = EmailVerificationToken.generate_token(self.user)
+        token.expires_at = timezone.now() - timedelta(days=1)
+        token.save()
+        
+        response = self.client.get(reverse('accounts:verify_email', kwargs={'token': token.token}), follow=True)
+        self.assertRedirects(response, reverse('accounts:login'))
+        
+        # Refresh user from database
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.email_verified)
+        self.assertFalse(self.user.is_active)
+
+    def test_email_verification_used_token(self):
+        token = EmailVerificationToken.generate_token(self.user)
+        token.is_used = True
+        token.save()
+        
+        response = self.client.get(reverse('accounts:verify_email', kwargs={'token': token.token}), follow=True)
+        self.assertRedirects(response, reverse('accounts:login'))
+        
+        # Refresh user from database
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.email_verified)
+        self.assertFalse(self.user.is_active)

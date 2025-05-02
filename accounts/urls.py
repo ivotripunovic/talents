@@ -16,6 +16,9 @@ urlpatterns = [
     path('register/fan/', views.FanRegistrationView.as_view(), name='fan_registration'),
     path('register/success/', views.RegistrationSuccessView.as_view(), name='registration_success'),
     
+    # Email Verification URL
+    path('verify-email/<uuid:token>/', views.verify_email, name='verify_email'),
+    
     # Authentication URLs
     path('login/', auth_views.LoginView.as_view(template_name='accounts/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='accounts:login'), name='logout'),

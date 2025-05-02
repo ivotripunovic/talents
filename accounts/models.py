@@ -1,6 +1,9 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.conf import settings
+import uuid
 
 class CustomUserManager(BaseUserManager):
     def _create_user(self, username, email, password=None, **extra_fields):
@@ -55,7 +58,15 @@ class CustomUser(AbstractUser):
         default=Role.FAN
     )
     date_of_birth = models.DateField(null=True, blank=True)
-    is_verified = models.BooleanField(default=False)
+    email_verified = models.BooleanField(
+        default=False,
+        help_text=_('Designates whether this user has verified their email address.')
+    )
+    is_active = models.BooleanField(
+        default=False,  # Changed from True to False - users must verify email
+        help_text=_('Designates whether this user should be treated as active. '
+                   'Users must verify their email address to become active.')
+    )
 
     # Add related_name to fix reverse accessor clash
     groups = models.ManyToManyField(
@@ -167,3 +178,26 @@ class FanProfile(models.Model):
     
     def __str__(self):
         return f"Fan Profile - {self.user.email}"
+
+class EmailVerificationToken(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            # Set expiration to 7 days from creation
+            self.expires_at = timezone.now() + timezone.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        return not self.is_used and timezone.now() <= self.expires_at
+
+    @classmethod
+    def generate_token(cls, user):
+        # Delete any existing unused tokens for this user
+        cls.objects.filter(user=user, is_used=False).delete()
+        # Create new token
+        return cls.objects.create(user=user)

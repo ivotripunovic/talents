@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Your Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h2>Welcome to Talents!</h2>
+    <p>Hi {{ user.get_full_name|default:user.username }},</p>
+    <p>Thank you for registering with Talents. To complete your registration and verify your email address, please click the button below:</p>
+    
+    <a href="http://{{ domain }}{% url 'accounts:verify_email' token=token %}" class="button">Verify Email Address</a>
+    
+    <p>If the button above doesn't work, you can copy and paste the following link into your browser:</p>
+    <p>http://{{ domain }}{% url 'accounts:verify_email' token=token %}</p>
+    
+    <p>This verification link will expire in {{ settings.ACCOUNT_ACTIVATION_DAYS }} days.</p>
+    
+    <p>If you did not create this account, you can safely ignore this email.</p>
+    
+    <div class="footer">
+        <p>Best regards,<br>The Talents Team</p>
+    </div>
+</body>
+</html> 
