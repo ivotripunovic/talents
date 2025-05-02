@@ -106,14 +106,54 @@ class PlayerProfile(models.Model):
         blank=True,
         related_name='guardian_of'
     )
-    position = models.CharField(max_length=50, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    age = models.PositiveIntegerField(null=True, blank=True)
     height = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # in cm
     weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # in kg
-    preferred_foot = models.CharField(
-        max_length=10,
-        choices=[('LEFT', 'Left'), ('RIGHT', 'Right'), ('BOTH', 'Both')],
-        blank=True
-    )
+    PREFERRED_FOOT_CHOICES = [
+        ('LEFT', 'Left'),
+        ('RIGHT', 'Right'),
+        ('BOTH', 'Both'),
+    ]
+    preferred_foot = models.CharField(max_length=10, choices=PREFERRED_FOOT_CHOICES, blank=True)
+    positions = models.CharField(max_length=200, blank=True, help_text='Comma-separated position codes (e.g. GK,CB,LB)')
+    languages = models.CharField(max_length=200, blank=True, help_text='Comma-separated language codes (e.g. en,hr,de)')
+    club = models.CharField(max_length=100, blank=True)
+    achievements = models.JSONField(null=True, blank=True)
+    medical_info = models.JSONField(null=True, blank=True)
+    social_links = models.JSONField(null=True, blank=True)
+    privacy_settings = models.JSONField(null=True, blank=True)
+    VERIFICATION_STATUS_CHOICES = [
+        ('unverified', 'Unverified'),
+        ('pending', 'Pending'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
+    verification_status = models.CharField(max_length=20, choices=VERIFICATION_STATUS_CHOICES, default='unverified')
+    PARENTAL_CONSENT_CHOICES = [
+        ('not_required', 'Not Required'),
+        ('pending', 'Pending'),
+        ('granted', 'Granted'),
+        ('rejected', 'Rejected'),
+    ]
+    parental_consent_status = models.CharField(max_length=20, choices=PARENTAL_CONSENT_CHOICES, default='not_required')
+
+    def set_positions(self, positions_list):
+        self.positions = ','.join(positions_list)
+
+    def get_positions(self):
+        if not self.positions:
+            return []
+        return self.positions.split(',')
+
+    def set_languages(self, languages_list):
+        self.languages = ','.join(languages_list)
+
+    def get_languages(self):
+        if not self.languages:
+            return []
+        return self.languages.split(',')
     
     def __str__(self):
         return f"Player Profile - {self.user.email}"

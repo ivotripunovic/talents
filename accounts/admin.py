@@ -24,9 +24,9 @@ class CustomUserAdmin(UserAdmin):
     ordering = ('email',)
 
 class PlayerProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'position', 'height', 'weight', 'preferred_foot', 'parent_guardian')
-    list_filter = ('position', 'preferred_foot')
-    search_fields = ('user__email', 'user__username', 'position')
+    list_display = ('user', 'country', 'city', 'age', 'height', 'weight', 'preferred_foot', 'parent_guardian')
+    list_filter = ('country', 'city', 'preferred_foot')
+    search_fields = ('user__email', 'user__username', 'country', 'city')
 
 class CoachProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'specialization', 'experience_years')

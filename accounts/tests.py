@@ -39,7 +39,6 @@ class PlayerRegistrationTest(BaseRegistrationTestCase):
         self.url = reverse('accounts:player_registration')
         self.data = {
             **self.base_data,
-            'position': 'Forward',
             'height': '180.5',
             'weight': '75.5',
             'preferred_foot': 'RIGHT'
@@ -55,7 +54,6 @@ class PlayerRegistrationTest(BaseRegistrationTestCase):
         
         # Verify profile was created
         profile = user.player_profile
-        self.assertEqual(profile.position, self.data['position'])
         self.assertEqual(float(profile.height), float(self.data['height']))
         self.assertEqual(float(profile.weight), float(self.data['weight']))
         self.assertEqual(profile.preferred_foot, self.data['preferred_foot'])
@@ -412,6 +410,86 @@ class PlayerProfileTests(TestCase):
         self.assertEqual(profile.preferred_foot, 'RIGHT')
         self.assertEqual(profile.parent_guardian, self.parent)
 
+    def test_player_profile_languages_field(self):
+        user = User.objects.create_user(
+            username='testlanguages',
+            email='testlanguages@example.com',
+            password='testpass123',
+            role=User.Role.PLAYER
+        )
+        profile = user.player_profile
+        languages = ['en', 'hr', 'de']
+        profile.set_languages(languages)
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.get_languages(), languages)
+
+    def test_player_profile_club_field(self):
+        user = User.objects.create_user(
+            username='testclub',
+            email='testclub@example.com',
+            password='testpass123',
+            role=User.Role.PLAYER
+        )
+        profile = user.player_profile
+        profile.club = 'Dinamo Zagreb'
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.club, 'Dinamo Zagreb')
+
+    def test_player_profile_achievements_field(self):
+        user = User.objects.create_user(
+            username='testachievements',
+            email='testachievements@example.com',
+            password='testpass123',
+            role=User.Role.PLAYER
+        )
+        profile = user.player_profile
+        achievements = {
+            "trophies": ["U19 League Winner", "Best Young Player"],
+            "goals": 25,
+            "assists": 10
+        }
+        profile.achievements = achievements
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.achievements, achievements)
+
+    def test_player_profile_medical_info_field(self):
+        user = User.objects.create_user(
+            username='testmedical',
+            email='testmedical@example.com',
+            password='testpass123',
+            role=User.Role.PLAYER
+        )
+        profile = user.player_profile
+        medical_info = {
+            "allergies": ["penicillin"],
+            "injuries": ["ACL tear"],
+            "notes": "Cleared for play"
+        }
+        profile.medical_info = medical_info
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.medical_info, medical_info)
+
+    def test_player_profile_social_links_field(self):
+        user = User.objects.create_user(
+            username='testsocial',
+            email='testsocial@example.com',
+            password='testpass123',
+            role=User.Role.PLAYER
+        )
+        profile = user.player_profile
+        social_links = {
+            "instagram": "https://instagram.com/testplayer",
+            "twitter": "https://twitter.com/testplayer"
+        }
+        profile.social_links = social_links
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.social_links, social_links)
+
 class CoachProfileTests(TestCase):
     def setUp(self):
         self.User = get_user_model()
@@ -529,3 +607,41 @@ class EmailVerificationTest(TestCase):
         self.user.refresh_from_db()
         self.assertFalse(self.user.email_verified)
         self.assertFalse(self.user.is_active)
+
+class PlayerProfileModelTest(TestCase):
+    def test_create_basic_player_profile(self):
+        user = User.objects.create_user(
+            username='testplayer',
+            email='testplayer@example.com',
+            password='testpass123',
+            role=User.Role.PLAYER
+        )
+        profile = user.player_profile
+        profile.country = 'Croatia'
+        profile.city = 'Zagreb'
+        profile.age = 20
+        profile.height = 180.5
+        profile.weight = 75.0
+        profile.preferred_foot = 'RIGHT'
+        profile.save()
+        self.assertEqual(profile.user, user)
+        self.assertEqual(profile.country, 'Croatia')
+        self.assertEqual(profile.city, 'Zagreb')
+        self.assertEqual(profile.age, 20)
+        self.assertEqual(float(profile.height), 180.5)
+        self.assertEqual(float(profile.weight), 75.0)
+        self.assertEqual(profile.preferred_foot, 'RIGHT')
+
+    def test_player_profile_positions_field(self):
+        user = User.objects.create_user(
+            username='testpositions',
+            email='testpositions@example.com',
+            password='testpass123',
+            role=User.Role.PLAYER
+        )
+        profile = user.player_profile
+        positions = ['GK', 'CB', 'LB']
+        profile.set_positions(positions)
+        profile.save()
+        profile.refresh_from_db()
+        self.assertEqual(profile.get_positions(), positions)
