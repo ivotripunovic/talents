@@ -1,0 +1,53 @@
+{% extends "accounts/registration/base_registration.html" %}
+
+{% block title %}Register as Coach{% endblock %}
+
+{% block role_specific_fields %}
+<div class="mb-3">
+    <label for="{{ form.coaching_license.id_for_label }}" class="form-label">Coaching License</label>
+    {{ form.coaching_license }}
+    {% if form.coaching_license.errors %}
+    <div class="invalid-feedback d-block">
+        {% for error in form.coaching_license.errors %}
+        {{ error }}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="mb-3">
+    <label for="{{ form.experience_years.id_for_label }}" class="form-label">Years of Experience</label>
+    {{ form.experience_years }}
+    {% if form.experience_years.errors %}
+    <div class="invalid-feedback d-block">
+        {% for error in form.experience_years.errors %}
+        {{ error }}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="mb-3">
+    <label for="{{ form.specialization.id_for_label }}" class="form-label">Specialization</label>
+    {{ form.specialization }}
+    {% if form.specialization.errors %}
+    <div class="invalid-feedback d-block">
+        {% for error in form.specialization.errors %}
+        {{ error }}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="mb-3">
+    <label for="{{ form.current_club.id_for_label }}" class="form-label">Current Club (Optional)</label>
+    {{ form.current_club }}
+    {% if form.current_club.errors %}
+    <div class="invalid-feedback d-block">
+        {% for error in form.current_club.errors %}
+        {{ error }}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

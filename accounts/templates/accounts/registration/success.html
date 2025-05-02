@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Registration Successful{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6 text-center">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h1 class="card-title text-success mb-4">
+                        <i class="fas fa-check-circle"></i>
+                        Registration Successful!
+                    </h1>
+                    
+                    <p class="lead mb-4">
+                        Thank you for registering! Your account has been created successfully.
+                    </p>
+                    
+                    {% if user.is_authenticated %}
+                        <p>You are now logged in as <strong>{{ user.email }}</strong>.</p>
+                        
+                        {% if not user.is_verified %}
+                        <div class="alert alert-info">
+                            <p class="mb-0">
+                                Please check your email to verify your account.
+                                You'll need to verify your email address before you can access all features.
+                            </p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 col-md-8 mx-auto">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-primary">Go to Profile</a>
+                            <a href="/" class="btn btn-outline-secondary">Go to Homepage</a>
+                        </div>
+                    {% else %}
+                        <div class="d-grid gap-2 col-md-8 mx-auto">
+                            <a href="{% url 'accounts:login' %}" class="btn btn-primary">Login</a>
+                            <a href="/" class="btn btn-outline-secondary">Go to Homepage</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

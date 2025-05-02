@@ -1,0 +1,52 @@
+{% extends 'accounts/registration/base_registration.html' %}
+{% load static %}
+
+{% block title %}Fan Registration{% endblock %}
+
+{% block role_specific_fields %}
+    {# Fan-specific fields #}
+    <div class="mb-3">
+        <label for="{{ form.favorite_team.id_for_label }}" class="form-label">{{ form.favorite_team.label }}</label>
+        {{ form.favorite_team }}
+        {% if form.favorite_team.help_text %}
+        <small class="form-text text-muted">{{ form.favorite_team.help_text }}</small>
+        {% endif %}
+        {% if form.favorite_team.errors %}
+        <div class="invalid-feedback">
+            {% for error in form.favorite_team.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.fan_since.id_for_label }}" class="form-label">{{ form.fan_since.label }}</label>
+        {{ form.fan_since }}
+        {% if form.fan_since.help_text %}
+        <small class="form-text text-muted">{{ form.fan_since.help_text }}</small>
+        {% endif %}
+        {% if form.fan_since.errors %}
+        <div class="invalid-feedback">
+            {% for error in form.fan_since.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.season_ticket_holder.id_for_label }}" class="form-label">{{ form.season_ticket_holder.label }}</label>
+        {{ form.season_ticket_holder }}
+        {% if form.season_ticket_holder.help_text %}
+        <small class="form-text text-muted">{{ form.season_ticket_holder.help_text }}</small>
+        {% endif %}
+        {% if form.season_ticket_holder.errors %}
+        <div class="invalid-feedback">
+            {% for error in form.season_ticket_holder.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+{% endblock %} 

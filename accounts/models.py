@@ -22,6 +22,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('role', 'MANAGER')  # Set default role for superuser
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -29,6 +30,13 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Superuser must have is_superuser=True.')
 
         return self._create_user(username, email, password, **extra_fields)
+
+    def make_random_password(self, length=10, allowed_chars='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'):
+        """
+        Generate a random password with the given length and allowed characters.
+        """
+        from django.utils.crypto import get_random_string
+        return get_random_string(length, allowed_chars)
 
 class CustomUser(AbstractUser):
     class Role(models.TextChoices):

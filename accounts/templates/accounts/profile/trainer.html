@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Trainer Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ user.get_full_name }}</h5>
+                    <p class="card-text"><i class="fas fa-envelope"></i> {{ user.email }}</p>
+                    <p class="card-text"><i class="fas fa-phone"></i> {{ user.phone_number }}</p>
+                    <a href="{% url 'accounts:trainer_profile_update' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Professional Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Specialization:</strong> {{ user.trainerprofile.specialization }}</p>
+                            <p><strong>Experience:</strong> {{ user.trainerprofile.years_of_experience }} years</p>
+                            <p><strong>Certifications:</strong> {{ user.trainerprofile.certifications }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Current Club:</strong> {{ user.trainerprofile.current_club|default:"Not specified" }}</p>
+                            <p><strong>Training Focus:</strong> {{ user.trainerprofile.training_focus }}</p>
+                            <p><strong>Available for Hire:</strong> {{ user.trainerprofile.available_for_hire|yesno:"Yes,No" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if user.trainerprofile.achievements %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Achievements</h4>
+                </div>
+                <div class="card-body">
+                    <p>{{ user.trainerprofile.achievements|linebreaks }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if user.trainerprofile.training_methodology %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Training Methodology</h4>
+                </div>
+                <div class="card-body">
+                    <p>{{ user.trainerprofile.training_methodology|linebreaks }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
