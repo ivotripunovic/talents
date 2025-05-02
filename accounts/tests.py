@@ -90,6 +90,15 @@ class PlayerRegistrationTest(BaseRegistrationTestCase):
         self.assertEqual(response.status_code, 200)  # Should stay on form
         self.assertFormErrorMessage(response, None, 'Parent/Guardian email is required for players under 18.')
 
+    def test_player_registration_with_positions(self):
+        data = self.data.copy()
+        data['positions'] = 'GK,CB,LB'
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 302)
+        user = User.objects.get(username=data['username'])
+        profile = user.player_profile
+        self.assertEqual(profile.get_positions(), ['GK', 'CB', 'LB'])
+
 class CoachRegistrationTest(BaseRegistrationTestCase):
     def setUp(self):
         super().setUp()
@@ -384,6 +393,8 @@ class PlayerProfileTests(TestCase):
             password='player123',
             role='PLAYER'
         )
+        self.user.is_active = True
+        self.user.save()
         self.parent = self.User.objects.create_user(
             username='parent',
             email='parent@example.com',
@@ -489,6 +500,37 @@ class PlayerProfileTests(TestCase):
         profile.save()
         profile.refresh_from_db()
         self.assertEqual(profile.social_links, social_links)
+
+    def test_update_player_profile_positions(self):
+        # Login using email, as USERNAME_FIELD is 'email'
+        logged_in = self.client.login(username='player@example.com', password='player123')
+        self.assertTrue(logged_in, "Test client failed to log in as player user")
+
+        url = reverse('accounts:player_profile_update')
+        # Set initial positions
+        self.user.player_profile.set_positions(['GK'])
+        self.user.player_profile.save()
+        # Get the form to extract CSRF token and initial data
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # Extract CSRF token
+        import re
+        csrf_token = re.search(r'name="csrfmiddlewaretoken" value="(.+?)"', response.content.decode()).group(1)
+        # Prepare data for update
+        data = {
+            'csrfmiddlewaretoken': csrf_token,
+            'country': 'Croatia',
+            'city': 'Zagreb',
+            'age': 20,
+            'height': 180.5,
+            'weight': 75.5,
+            'preferred_foot': 'RIGHT',
+            'positions': 'GK,CB,LB',
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)  # Expect redirect after successful update
+        self.user.player_profile.refresh_from_db()
+        self.assertEqual(self.user.player_profile.get_positions(), ['GK', 'CB', 'LB'])
 
 class CoachProfileTests(TestCase):
     def setUp(self):

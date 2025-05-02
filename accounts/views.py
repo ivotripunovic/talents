@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from .forms import (
     PlayerRegistrationForm, CoachRegistrationForm, ScoutRegistrationForm,
     ManagerRegistrationForm, TrainerRegistrationForm, ClubRegistrationForm,
-    FanRegistrationForm
+    FanRegistrationForm, PlayerProfileUpdateForm
 )
 from django.template import TemplateDoesNotExist
 from django.contrib import messages
@@ -209,7 +209,10 @@ def profile_view(request):
 
 @login_required
 def player_profile_view(request):
-    return render(request, 'accounts/profile/player.html', {'user': request.user})
+    return render(request, 'accounts/profile/player.html', {
+        'user': request.user,
+        'profile': getattr(request.user, 'player_profile', None),
+    })
 
 @login_required
 def coach_profile_view(request):
@@ -251,7 +254,7 @@ class ScoutProfileUpdateView(LoginRequiredMixin, UpdateView):
 class PlayerProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = PlayerProfile
     template_name = 'accounts/profile/player_update.html'
-    fields = ['date_of_birth', 'position', 'height', 'weight', 'preferred_foot', 'current_club']
+    form_class = PlayerProfileUpdateForm
     success_url = reverse_lazy('accounts:profile')
 
     def get_object(self, queryset=None):

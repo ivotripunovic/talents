@@ -1,0 +1,87 @@
+.football-field-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.football-field {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 150%; /* 3:2 aspect ratio */
+  background-color: #4CAF50;
+  border: 2px solid white;
+  border-radius: 10px;
+}
+
+.center-circle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60px;
+  height: 60px;
+  border: 2px solid white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.penalty-area.top, .penalty-area.bottom {
+  position: absolute;
+  left: 25%;
+  width: 50%;
+  height: 40px;
+  border: 2px solid white;
+  border-radius: 0 0 20px 20px;
+}
+.penalty-area.top {
+  top: 0;
+  border-radius: 0 0 20px 20px;
+}
+.penalty-area.bottom {
+  bottom: 0;
+  border-radius: 20px 20px 0 0;
+}
+
+.position-marker {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: all 0.2s ease;
+  font-weight: bold;
+  border: 2px solid transparent;
+}
+
+.position-marker.selected {
+  background-color: #2196F3;
+  color: white;
+  border: 2px solid #1976D2;
+}
+
+.position-marker.primary {
+  background-color: #FF5722;
+  color: white;
+  border: 2px solid yellow;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .football-field-container {
+    max-width: 100vw;
+  }
+  .position-marker {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  .center-circle {
+    width: 30px;
+    height: 30px;
+  }
+} 

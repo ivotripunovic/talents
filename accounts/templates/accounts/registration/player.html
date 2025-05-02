@@ -1,18 +1,45 @@
 {% extends "accounts/registration/base_registration.html" %}
+{% load static %}
 
 {% block title %}Register as Player{% endblock %}
 
 {% block role_specific_fields %}
+{#
+  NOTE: To enable the football field UI, include the following static files in your base template or this template:
+  <link rel="stylesheet" href="{% static 'css/football_field.css' %}">
+  <script src="{% static 'js/football_field.js' %}"></script>
+#}
 <div class="mb-3">
-    <label for="{{ form.position.id_for_label }}" class="form-label">Position</label>
-    {{ form.position }}
-    {% if form.position.errors %}
-    <div class="invalid-feedback d-block">
-        {% for error in form.position.errors %}
-        {{ error }}
-        {% endfor %}
+    <label class="form-label">Select Your Position(s) on the Field</label>
+    <div class="football-field-container">
+      <div class="football-field">
+        <!-- Field markings -->
+        <div class="center-circle"></div>
+        <div class="penalty-area top"></div>
+        <div class="penalty-area bottom"></div>
+        <!-- Position markers -->
+        <div class="position-marker" data-position="GK" style="bottom: 5%; left: 50%;">GK</div>
+        <div class="position-marker" data-position="CB" style="bottom: 20%; left: 35%;">CB</div>
+        <div class="position-marker" data-position="CB" style="bottom: 20%; left: 65%;">CB</div>
+        <div class="position-marker" data-position="LB" style="bottom: 30%; left: 20%;">LB</div>
+        <div class="position-marker" data-position="RB" style="bottom: 30%; left: 80%;">RB</div>
+        <div class="position-marker" data-position="CDM" style="bottom: 40%; left: 50%;">CDM</div>
+        <div class="position-marker" data-position="CM" style="bottom: 55%; left: 35%;">CM</div>
+        <div class="position-marker" data-position="CM" style="bottom: 55%; left: 65%;">CM</div>
+        <div class="position-marker" data-position="CAM" style="bottom: 70%; left: 50%;">CAM</div>
+        <div class="position-marker" data-position="LW" style="bottom: 80%; left: 20%;">LW</div>
+        <div class="position-marker" data-position="RW" style="bottom: 80%; left: 80%;">RW</div>
+        <div class="position-marker" data-position="ST" style="bottom: 90%; left: 50%;">ST</div>
+      </div>
+      <div class="position-selection-controls mt-2">
+        <div class="selected-positions">
+          <p>Selected: <span id="selected-positions-display">None</span></p>
+          <p>Primary: <span id="primary-position-display">None</span></p>
+        </div>
+        <input type="hidden" id="positions-input" name="positions" value="">
+      </div>
     </div>
-    {% endif %}
+    <!-- TODO: Include football_field.css and football_field.js -->
 </div>
 
 <div class="row">

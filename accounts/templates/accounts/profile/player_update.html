@@ -4,6 +4,7 @@
 {% block title %}Update Player Profile{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/football_field.css' %}">
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -14,7 +15,37 @@
                 <div class="card-body">
                     <form method="post" novalidate>
                         {% csrf_token %}
-                        
+                        <!-- Football Field UI for positions -->
+                        <div class="mb-3">
+                            <label class="form-label">Select Your Position(s) on the Field</label>
+                            <div class="football-field-container">
+                              <div class="football-field">
+                                <div class="center-circle"></div>
+                                <div class="penalty-area top"></div>
+                                <div class="penalty-area bottom"></div>
+                                <div class="position-marker" data-position="GK" style="bottom: 5%; left: 50%;">GK</div>
+                                <div class="position-marker" data-position="CB" style="bottom: 20%; left: 35%;">CB</div>
+                                <div class="position-marker" data-position="CB" style="bottom: 20%; left: 65%;">CB</div>
+                                <div class="position-marker" data-position="LB" style="bottom: 30%; left: 20%;">LB</div>
+                                <div class="position-marker" data-position="RB" style="bottom: 30%; left: 80%;">RB</div>
+                                <div class="position-marker" data-position="CDM" style="bottom: 40%; left: 50%;">CDM</div>
+                                <div class="position-marker" data-position="CM" style="bottom: 55%; left: 35%;">CM</div>
+                                <div class="position-marker" data-position="CM" style="bottom: 55%; left: 65%;">CM</div>
+                                <div class="position-marker" data-position="CAM" style="bottom: 70%; left: 50%;">CAM</div>
+                                <div class="position-marker" data-position="LW" style="bottom: 80%; left: 20%;">LW</div>
+                                <div class="position-marker" data-position="RW" style="bottom: 80%; left: 80%;">RW</div>
+                                <div class="position-marker" data-position="ST" style="bottom: 90%; left: 50%;">ST</div>
+                              </div>
+                              <div class="position-selection-controls mt-2">
+                                <div class="selected-positions">
+                                  <p>Selected: <span id="selected-positions-display">None</span></p>
+                                  <p>Primary: <span id="primary-position-display">None</span></p>
+                                </div>
+                                {{ form.positions }}
+                              </div>
+                            </div>
+                        </div>
+                        <!-- End Football Field UI -->
                         {% if form.non_field_errors %}
                         <div class="alert alert-danger">
                             {% for error in form.non_field_errors %}
@@ -22,8 +53,8 @@
                             {% endfor %}
                         </div>
                         {% endif %}
-
                         {% for field in form %}
+                        {% if field.name != 'positions' %}
                         <div class="mb-3">
                             <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                             {{ field }}
@@ -38,8 +69,8 @@
                             </div>
                             {% endif %}
                         </div>
+                        {% endif %}
                         {% endfor %}
-
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">Update Profile</button>
                             <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Cancel</a>
@@ -50,4 +81,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/football_field.js' %}"></script>
 {% endblock %} 

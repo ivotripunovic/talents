@@ -9,34 +9,61 @@
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <div class="text-center mb-4">
-                        <div class="avatar-placeholder mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="avatar-placeholder mb-0">
                             <i class="fas fa-user-alt fa-4x text-secondary"></i>
                         </div>
+                        <a href="{% url 'accounts:player_profile_update' %}" class="btn btn-primary">Edit Profile</a>
+                    </div>
+                    <div class="text-center mb-4">
                         <h5 class="card-title mb-0">{{ user.get_full_name }}</h5>
                         <p class="text-muted">Player</p>
                     </div>
-                    
                     <hr>
-                    
                     <div class="mb-3">
                         <label class="form-label text-muted">Date of Birth</label>
-                        <p class="mb-0">{{ user.player_profile.date_of_birth|date:"F j, Y" }}</p>
+                        <p class="mb-0">{{ profile.user.date_of_birth|date:"F j, Y" }}</p>
                     </div>
-                    
                     <div class="mb-3">
-                        <label class="form-label text-muted">Position</label>
-                        <p class="mb-0">{{ user.player_profile.position|default:"Not specified" }}</p>
+                        <label class="form-label text-muted">Positions</label>
+                        <p class="mb-0">
+                          {% if profile.positions %}
+                            {{ profile.positions }}
+                          {% else %}
+                            Not specified
+                          {% endif %}
+                        </p>
+                        <!-- Football Field UI for displaying positions visually -->
+                        {% with positions_list=profile.get_positions %}
+                        <div class="football-field-container mt-3">
+                          <div class="football-field">
+                            <div class="center-circle"></div>
+                            <div class="penalty-area top"></div>
+                            <div class="penalty-area bottom"></div>
+                            <div class="position-marker {% if 'GK' in positions_list %}selected{% endif %}" data-position="GK" style="bottom: 5%; left: 50%;">GK</div>
+                            <div class="position-marker {% if 'CB' in positions_list %}selected{% endif %}" data-position="CB" style="bottom: 20%; left: 35%;">CB</div>
+                            <div class="position-marker {% if 'CB' in positions_list %}selected{% endif %}" data-position="CB" style="bottom: 20%; left: 65%;">CB</div>
+                            <div class="position-marker {% if 'LB' in positions_list %}selected{% endif %}" data-position="LB" style="bottom: 30%; left: 20%;">LB</div>
+                            <div class="position-marker {% if 'RB' in positions_list %}selected{% endif %}" data-position="RB" style="bottom: 30%; left: 80%;">RB</div>
+                            <div class="position-marker {% if 'CDM' in positions_list %}selected{% endif %}" data-position="CDM" style="bottom: 40%; left: 50%;">CDM</div>
+                            <div class="position-marker {% if 'CM' in positions_list %}selected{% endif %}" data-position="CM" style="bottom: 55%; left: 35%;">CM</div>
+                            <div class="position-marker {% if 'CM' in positions_list %}selected{% endif %}" data-position="CM" style="bottom: 55%; left: 65%;">CM</div>
+                            <div class="position-marker {% if 'CAM' in positions_list %}selected{% endif %}" data-position="CAM" style="bottom: 70%; left: 50%;">CAM</div>
+                            <div class="position-marker {% if 'LW' in positions_list %}selected{% endif %}" data-position="LW" style="bottom: 80%; left: 20%;">LW</div>
+                            <div class="position-marker {% if 'RW' in positions_list %}selected{% endif %}" data-position="RW" style="bottom: 80%; left: 80%;">RW</div>
+                            <div class="position-marker {% if 'ST' in positions_list %}selected{% endif %}" data-position="ST" style="bottom: 90%; left: 50%;">ST</div>
+                          </div>
+                        </div>
+                        {% endwith %}
+                        <!-- End Football Field UI -->
                     </div>
-                    
                     <div class="mb-3">
                         <label class="form-label text-muted">Height</label>
-                        <p class="mb-0">{{ user.player_profile.height|default:"Not specified" }} cm</p>
+                        <p class="mb-0">{{ profile.height|default:user.player_profile.height|default:"Not specified" }} cm</p>
                     </div>
-                    
                     <div class="mb-3">
                         <label class="form-label text-muted">Weight</label>
-                        <p class="mb-0">{{ user.player_profile.weight|default:"Not specified" }} kg</p>
+                        <p class="mb-0">{{ profile.weight|default:user.player_profile.weight|default:"Not specified" }} kg</p>
                     </div>
                 </div>
             </div>
@@ -72,6 +99,74 @@
         align-items: center;
         justify-content: center;
         margin: 0 auto;
+    }
+    .football-field-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    .football-field {
+        position: relative;
+        width: 300px;
+        height: 450px;
+        background: #4caf50;
+        border-radius: 20px;
+        border: 2px solid #388e3c;
+        margin-bottom: 1rem;
+    }
+    .center-circle {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 60px;
+        height: 60px;
+        margin-left: -30px;
+        margin-top: -30px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+    }
+    .penalty-area.top {
+        position: absolute;
+        top: 0;
+        left: 25%;
+        width: 50%;
+        height: 60px;
+        border: 2px solid #fff;
+        border-bottom: none;
+        border-radius: 0 0 30px 30px;
+    }
+    .penalty-area.bottom {
+        position: absolute;
+        bottom: 0;
+        left: 25%;
+        width: 50%;
+        height: 60px;
+        border: 2px solid #fff;
+        border-top: none;
+        border-radius: 30px 30px 0 0;
+    }
+    .position-marker {
+        position: absolute;
+        width: 36px;
+        height: 36px;
+        background: rgba(255,255,255,0.8);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #333;
+        border: 2px solid #388e3c;
+        cursor: default;
+        transition: background 0.2s, border 0.2s;
+    }
+    .position-marker.selected {
+        background: #ffeb3b;
+        border: 2px solid #fbc02d;
+        color: #222;
+        box-shadow: 0 0 10px #fbc02d;
     }
 </style>
 {% endblock %} 

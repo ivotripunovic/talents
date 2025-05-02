@@ -91,7 +91,12 @@ class PlayerRegistrationForm(BaseRegistrationForm):
             profile.height = self.cleaned_data.get('height')
             profile.weight = self.cleaned_data.get('weight')
             profile.preferred_foot = self.cleaned_data.get('preferred_foot', '')
-
+            # Save positions from football field UI
+            positions_str = self.data.get('positions') or self.cleaned_data.get('positions')
+            if positions_str:
+                profile.set_positions([p for p in positions_str.split(',') if p])
+            else:
+                profile.set_positions([])
             # Handle parent/guardian relationship if player is underage
             if self.cleaned_data.get('is_underage'):
                 parent_email = self.cleaned_data.get('parent_email')
@@ -110,9 +115,7 @@ class PlayerRegistrationForm(BaseRegistrationForm):
                         parent_user.set_password(random_password)
                         parent_user.save()
                         # TODO: Send email to parent with their credentials
-
                     profile.parent_guardian = parent_user
-
             profile.save()
         return user
 
@@ -302,4 +305,32 @@ class FanRegistrationForm(BaseRegistrationForm):
             profile.favorite_club = self.cleaned_data.get('favorite_club', '')
             profile.membership_type = self.cleaned_data.get('membership_type', 'REGULAR')
             profile.save()
-        return user 
+        return user
+
+class PlayerProfileUpdateForm(forms.ModelForm):
+    positions = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    class Meta:
+        model = PlayerProfile
+        fields = ['country', 'city', 'age', 'height', 'weight', 'preferred_foot', 'positions']
+        widgets = {
+            'preferred_foot': forms.Select(choices=[('', '---'), ('LEFT', 'Left'), ('RIGHT', 'Right'), ('BOTH', 'Both')]),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pre-populate positions field from model
+        if self.instance and self.instance.positions:
+            self.fields['positions'].initial = self.instance.positions
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        # Always get positions from self.data to ensure update
+        positions_str = self.data.get('positions', '')
+        if positions_str:
+            profile.set_positions([p for p in positions_str.split(',') if p])
+        else:
+            profile.set_positions([])
+        if commit:
+            profile.save()
+        return profile 
