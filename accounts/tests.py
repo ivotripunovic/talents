@@ -27,6 +27,8 @@ class BaseRegistrationTestCase(TestCase):
     def assertFormErrorMessage(self, response, field, message):
         """Assert that a form error message exists for a field."""
         form = response.context['form']
+        if field is None:
+            field = '__all__'  # Django uses '__all__' for non-field errors
         self.assertIn(field, form.errors)
         self.assertIn(message, form.errors[field][0])
 
@@ -182,12 +184,12 @@ class ScoutProfileTest(BaseRegistrationTestCase):
         self.client.login(username=self.user_data['email'], password=self.user_data['password'])
 
     def test_profile_page_access(self):
-        response = self.client.get(reverse('accounts:profile'))
+        response = self.client.get(reverse('accounts:scout_profile'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'accounts/profile/scout.html')
 
     def test_profile_page_content(self):
-        response = self.client.get(reverse('accounts:profile'))
+        response = self.client.get(reverse('accounts:scout_profile'))
         self.assertContains(response, self.user.email)
         self.assertContains(response, self.profile_data['organization'])
         self.assertContains(response, self.profile_data['regions_covered'])
@@ -195,12 +197,12 @@ class ScoutProfileTest(BaseRegistrationTestCase):
 
     def test_profile_page_unauthenticated(self):
         self.client.logout()
-        response = self.client.get(reverse('accounts:profile'))
+        response = self.client.get(reverse('accounts:scout_profile'))
         self.assertEqual(response.status_code, 302)  # Should redirect to login
-        self.assertRedirects(response, f"{reverse('accounts:login')}?next={reverse('accounts:profile')}")
+        self.assertRedirects(response, f"{reverse('accounts:login')}?next={reverse('accounts:scout_profile')}")
 
     def test_profile_update(self):
-        update_url = reverse('accounts:update_profile')
+        update_url = reverse('accounts:scout_profile_update')
         new_data = {
             'organization': 'Global Talent Hunters',
             'regions_covered': 'Europe, Africa',
@@ -216,7 +218,7 @@ class ScoutProfileTest(BaseRegistrationTestCase):
         self.assertEqual(self.profile.years_of_experience, new_data['years_of_experience'])
 
     def test_profile_update_invalid_data(self):
-        update_url = reverse('accounts:update_profile')
+        update_url = reverse('accounts:scout_profile_update')
         invalid_data = {
             'organization': 'Global Talent Hunters',
             'regions_covered': 'Europe, Africa',

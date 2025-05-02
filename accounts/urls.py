@@ -45,7 +45,14 @@ urlpatterns = [
          name='password_reset_complete'),
     
     # Profile URLs
-    path('profile/', views.profile_view, name='profile'),
+    path('profile/', views.profile_view, name='profile'),  # Generic profile router
+    path('profile/player/', views.player_profile_view, name='player_profile'),
+    path('profile/coach/', views.coach_profile_view, name='coach_profile'),
+    path('profile/scout/', views.scout_profile_view, name='scout_profile'),
+    path('profile/manager/', views.manager_profile_view, name='manager_profile'),
+    path('profile/trainer/', views.trainer_profile_view, name='trainer_profile'),
+    path('profile/club/', views.club_profile_view, name='club_profile'),
+    path('profile/fan/', views.fan_profile_view, name='fan_profile'),
     
     # Profile Update URLs
     path('profile/player/update/', views.PlayerProfileUpdateView.as_view(), name='player_profile_update'),

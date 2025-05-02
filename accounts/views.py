@@ -173,15 +173,38 @@ class RegistrationSuccessView(TemplateView):
 
 @login_required
 def profile_view(request):
+    """Generic profile view that redirects to role-specific profile."""
     user = request.user
     role = user.role.lower()
-    template_name = f'accounts/profile/{role}.html'
-    
-    try:
-        return render(request, template_name, {'user': user})
-    except TemplateDoesNotExist:
-        messages.error(request, f"Profile template for {role} role not found.")
-        return redirect('home')
+    return redirect(f'accounts:{role}_profile')
+
+@login_required
+def player_profile_view(request):
+    return render(request, 'accounts/profile/player.html', {'user': request.user})
+
+@login_required
+def coach_profile_view(request):
+    return render(request, 'accounts/profile/coach.html', {'user': request.user})
+
+@login_required
+def scout_profile_view(request):
+    return render(request, 'accounts/profile/scout.html', {'user': request.user})
+
+@login_required
+def manager_profile_view(request):
+    return render(request, 'accounts/profile/manager.html', {'user': request.user})
+
+@login_required
+def trainer_profile_view(request):
+    return render(request, 'accounts/profile/trainer.html', {'user': request.user})
+
+@login_required
+def club_profile_view(request):
+    return render(request, 'accounts/profile/club.html', {'user': request.user})
+
+@login_required
+def fan_profile_view(request):
+    return render(request, 'accounts/profile/fan.html', {'user': request.user})
 
 class ScoutProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = ScoutProfile
