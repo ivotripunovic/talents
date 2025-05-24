@@ -13,13 +13,16 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import (
     ScoutProfile, PlayerProfile, CoachProfile, ManagerProfile,
-    TrainerProfile, ClubProfile, FanProfile, EmailVerificationToken
+    TrainerProfile, ClubProfile, FanProfile, EmailVerificationToken, ParentalConsentRequest
 )
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
+from django.utils import timezone
+from django import forms
+from django.contrib.admin.views.decorators import staff_member_required
 
 User = get_user_model()
 
@@ -110,15 +113,18 @@ class PlayerRegistrationView(BaseRegistrationView):
     template_name = 'accounts/registration/player.html'
     form_class = PlayerRegistrationForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
     def form_valid(self, form):
         response = super().form_valid(form)
-        user = form.save()
-        
-        # Handle parent/guardian relationship if player is underage
+        user = self.object  # Already saved by super().form_valid(form)
+        # Only link parent/guardian if needed; do not call form.save() again
         if form.cleaned_data.get('is_underage'):
             parent_email = form.cleaned_data.get('parent_email')
             if parent_email:
-                # Create or get parent user account
                 parent_user, created = User.objects.get_or_create(
                     email=parent_email,
                     defaults={
@@ -128,19 +134,14 @@ class PlayerRegistrationView(BaseRegistrationView):
                     }
                 )
                 if created:
-                    # Set a random password and send reset password email
                     parent_user.set_password(User.objects.make_random_password())
                     parent_user.save()
-                    # Send password reset email to parent
                     messages.info(
                         self.request,
                         f"A password reset email will be sent to the parent/guardian at {parent_email}"
                     )
-                
-                # Link parent to player profile
                 user.player_profile.parent_guardian = parent_user
                 user.player_profile.save()
-        
         return response
 
 class CoachRegistrationView(BaseRegistrationView):
@@ -257,12 +258,23 @@ class PlayerProfileUpdateView(LoginRequiredMixin, UpdateView):
     form_class = PlayerProfileUpdateForm
     success_url = reverse_lazy('accounts:profile')
 
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def get_object(self, queryset=None):
         return self.request.user.player_profile
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
 
     def form_valid(self, form):
         messages.success(self.request, 'Profile updated successfully.')
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
 
 class CoachProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = CoachProfile
@@ -350,3 +362,38 @@ def verify_email(request, token):
         else:
             messages.error(request, 'This verification link has expired.')
         return redirect('accounts:login')
+
+def consent_verify_view(request, token):
+    consent = get_object_or_404(ParentalConsentRequest, token=token)
+    class ConsentForm(forms.Form):
+        action = forms.ChoiceField(choices=[('grant', 'Grant Consent'), ('reject', 'Reject Consent')], widget=forms.RadioSelect)
+        notes = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+    message = None
+    if request.method == 'POST' and consent.status == 'pending':
+        form = ConsentForm(request.POST)
+        if form.is_valid():
+            action = form.cleaned_data['action']
+            consent.status = 'granted' if action == 'grant' else 'rejected'
+            consent.responded_at = timezone.now()
+            consent.response_ip = request.META.get('REMOTE_ADDR')
+            consent.notes = form.cleaned_data['notes']
+            consent.save()
+            message = 'Consent has been {}.'.format('granted' if action == 'grant' else 'rejected')
+    else:
+        form = ConsentForm()
+    return render(request, 'accounts/consent_verify.html', {
+        'consent': consent,
+        'form': form,
+        'message': message,
+    })
+
+@staff_member_required
+def parental_consent_list_view(request):
+    status = request.GET.get('status')
+    qs = ParentalConsentRequest.objects.all().order_by('-requested_at')
+    if status:
+        qs = qs.filter(status=status)
+    return render(request, 'accounts/parental_consent_list.html', {
+        'requests': qs,
+        'status': status,
+    })

@@ -5,9 +5,10 @@ from django.core.exceptions import ValidationError
 from datetime import date
 from .models import (
     PlayerProfile, CoachProfile, ScoutProfile, ManagerProfile,
-    TrainerProfile, ClubProfile, FanProfile
+    TrainerProfile, ClubProfile, FanProfile, ParentalConsentRequest
 )
 from django.utils import timezone
+from .utils import send_parental_consent_email
 
 User = get_user_model()
 
@@ -30,6 +31,7 @@ class BaseRegistrationForm(UserCreationForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['password1'].widget.attrs['class'] = 'form-control'
         self.fields['password2'].widget.attrs['class'] = 'form-control'
@@ -57,27 +59,37 @@ class PlayerRegistrationForm(BaseRegistrationForm):
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+    parent_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
     parent_email = forms.EmailField(
         required=False,
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
+    parent_phone = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
 
     class Meta(BaseRegistrationForm.Meta):
-        fields = BaseRegistrationForm.Meta.fields + ('position', 'height', 'weight', 'preferred_foot', 'parent_email')
+        fields = BaseRegistrationForm.Meta.fields + ('position', 'height', 'weight', 'preferred_foot', 'parent_name', 'parent_email', 'parent_phone')
 
     def clean(self):
         cleaned_data = super().clean()
         date_of_birth = cleaned_data.get('date_of_birth')
+        parent_name = cleaned_data.get('parent_name')
         parent_email = cleaned_data.get('parent_email')
-
+        parent_phone = cleaned_data.get('parent_phone')
         if date_of_birth:
             today = timezone.now().date()
             age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
             cleaned_data['is_underage'] = age < 18
-
-            if age < 18 and not parent_email:
-                raise ValidationError('Parent/Guardian email is required for players under 18.')
-
+            if age < 18:
+                if not parent_name:
+                    self.add_error('parent_name', 'Parent/Guardian name is required for players under 18.')
+                if not parent_email:
+                    self.add_error('parent_email', 'Parent/Guardian email is required for players under 18.')
         return cleaned_data
 
     def save(self, commit=True):
@@ -85,37 +97,33 @@ class PlayerRegistrationForm(BaseRegistrationForm):
         user.role = User.Role.PLAYER
         if commit:
             user.save()
-            # Update the profile created by the signal
             profile = user.player_profile
             profile.position = self.cleaned_data.get('position', '')
             profile.height = self.cleaned_data.get('height')
             profile.weight = self.cleaned_data.get('weight')
             profile.preferred_foot = self.cleaned_data.get('preferred_foot', '')
-            # Save positions from football field UI
             positions_str = self.data.get('positions') or self.cleaned_data.get('positions')
             if positions_str:
                 profile.set_positions([p for p in positions_str.split(',') if p])
             else:
                 profile.set_positions([])
-            # Handle parent/guardian relationship if player is underage
+            # Parental consent workflow
             if self.cleaned_data.get('is_underage'):
-                parent_email = self.cleaned_data.get('parent_email')
-                if parent_email:
-                    # Create or get parent user account
-                    parent_user, created = User.objects.get_or_create(
-                        email=parent_email,
-                        defaults={
-                            'username': parent_email.split('@')[0],
-                            'role': User.Role.FAN
-                        }
+                consent = ParentalConsentRequest.objects.create(
+                    player=user,
+                    parent_name=self.cleaned_data.get('parent_name'),
+                    parent_email=self.cleaned_data.get('parent_email'),
+                    parent_phone=self.cleaned_data.get('parent_phone'),
+                )
+                profile.parental_consent_status = 'pending'
+                if self.request:
+                    send_parental_consent_email(
+                        parent_email=self.cleaned_data.get('parent_email'),
+                        parent_name=self.cleaned_data.get('parent_name'),
+                        player=user,
+                        token=consent.token,
+                        request=self.request
                     )
-                    if created:
-                        # Set a random password for new parent accounts
-                        random_password = User.objects.make_random_password()
-                        parent_user.set_password(random_password)
-                        parent_user.save()
-                        # TODO: Send email to parent with their credentials
-                    profile.parent_guardian = parent_user
             profile.save()
         return user
 
@@ -309,23 +317,50 @@ class FanRegistrationForm(BaseRegistrationForm):
 
 class PlayerProfileUpdateForm(forms.ModelForm):
     positions = forms.CharField(required=False, widget=forms.HiddenInput())
+    parent_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    parent_email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    parent_phone = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = PlayerProfile
-        fields = ['country', 'city', 'age', 'height', 'weight', 'preferred_foot', 'positions']
+        fields = ['country', 'city', 'age', 'height', 'weight', 'preferred_foot', 'positions', 'parent_name', 'parent_email', 'parent_phone']
         widgets = {
             'preferred_foot': forms.Select(choices=[('', '---'), ('LEFT', 'Left'), ('RIGHT', 'Right'), ('BOTH', 'Both')]),
         }
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         # Pre-populate positions field from model
         if self.instance and self.instance.positions:
             self.fields['positions'].initial = self.instance.positions
+        # Pre-populate parent fields from latest consent request if exists
+        latest_consent = self.instance.user.parental_consent_requests.order_by('-requested_at').first() if self.instance and getattr(self.instance, 'user', None) else None
+        if latest_consent:
+            self.fields['parent_name'].initial = latest_consent.parent_name
+            self.fields['parent_email'].initial = latest_consent.parent_email
+            self.fields['parent_phone'].initial = latest_consent.parent_phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = getattr(self.instance, 'user', None)
+        date_of_birth = getattr(user, 'date_of_birth', None)
+        parent_name = cleaned_data.get('parent_name')
+        parent_email = cleaned_data.get('parent_email')
+        parent_phone = cleaned_data.get('parent_phone')
+        if date_of_birth:
+            today = timezone.now().date()
+            age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
+            cleaned_data['is_underage'] = age < 18
+            if age < 18:
+                if not parent_name:
+                    self.add_error('parent_name', 'Parent/Guardian name is required for players under 18.')
+                if not parent_email:
+                    self.add_error('parent_email', 'Parent/Guardian email is required for players under 18.')
+        return cleaned_data
 
     def save(self, commit=True):
         profile = super().save(commit=False)
-        # Always get positions from self.data to ensure update
         positions_str = self.data.get('positions', '')
         if positions_str:
             profile.set_positions([p for p in positions_str.split(',') if p])
@@ -333,4 +368,22 @@ class PlayerProfileUpdateForm(forms.ModelForm):
             profile.set_positions([])
         if commit:
             profile.save()
+            # Parental consent workflow
+            if self.cleaned_data.get('is_underage') and self.cleaned_data.get('parent_email'):
+                consent = ParentalConsentRequest.objects.create(
+                    player=profile.user,
+                    parent_name=self.cleaned_data.get('parent_name'),
+                    parent_email=self.cleaned_data.get('parent_email'),
+                    parent_phone=self.cleaned_data.get('parent_phone'),
+                )
+                profile.parental_consent_status = 'pending'
+                if self.request:
+                    send_parental_consent_email(
+                        parent_email=self.cleaned_data.get('parent_email'),
+                        parent_name=self.cleaned_data.get('parent_name'),
+                        player=profile.user,
+                        token=consent.token,
+                        request=self.request
+                    )
+                profile.save()
         return profile 

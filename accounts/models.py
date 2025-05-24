@@ -241,3 +241,23 @@ class EmailVerificationToken(models.Model):
         cls.objects.filter(user=user, is_used=False).delete()
         # Create new token
         return cls.objects.create(user=user)
+
+class ParentalConsentRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('granted', 'Granted'),
+        ('rejected', 'Rejected'),
+    ]
+    player = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='parental_consent_requests')
+    parent_name = models.CharField(max_length=255)
+    parent_email = models.EmailField()
+    parent_phone = models.CharField(max_length=20, blank=True)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    requested_at = models.DateTimeField(default=timezone.now)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    response_ip = models.CharField(max_length=45, blank=True)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Consent for {self.player.email} ({self.status})"

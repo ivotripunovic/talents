@@ -1,4 +1,4 @@
-Found 7 test(s).
+Found 6 test(s).
 Operations to perform:
   Synchronize unmigrated apps: messages, staticfiles
   Apply all migrations: accounts, admin, auth, contenttypes, sessions
@@ -29,8 +29,13 @@ Running migrations:
   Applying accounts.0007_playerprofile_achievements... OK
   Applying accounts.0008_playerprofile_medical_info... OK
   Applying accounts.0009_playerprofile_parental_consent_status_and_more... OK
+  Applying accounts.0010_parentalconsentrequest... OK
   Applying admin.0001_initial... OK
   Applying admin.0002_logentry_remove_auto_add... OK
   Applying admin.0003_logentry_add_action_flag_choices... OK
   Applying sessions.0001_initial... OK
 System check identified no issues (0 silenced).
+TEST DEBUG: user.date_of_birth: 2015-05-26
+TEST DEBUG: calculated age: 9
+TEST DEBUG: response status code: 302
+TEST DEBUG: response content: 

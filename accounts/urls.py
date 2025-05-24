@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from .views import consent_verify_view, parental_consent_list_view
 
 app_name = 'accounts'
 
@@ -65,4 +66,6 @@ urlpatterns = [
     path('profile/trainer/update/', views.TrainerProfileUpdateView.as_view(), name='trainer_profile_update'),
     path('profile/club/update/', views.ClubProfileUpdateView.as_view(), name='club_profile_update'),
     path('profile/fan/update/', views.FanProfileUpdateView.as_view(), name='fan_profile_update'),
+    path('consent/verify/<uuid:token>/', consent_verify_view, name='consent_verify'),
+    path('admin/parental-consent/', parental_consent_list_view, name='parental_consent_list'),
 ] 

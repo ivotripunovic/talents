@@ -13,6 +13,11 @@
                     <h2 class="text-center">Update Player Profile</h2>
                 </div>
                 <div class="card-body">
+                    {% if profile.parental_consent_status %}
+                    <div class="alert alert-info mb-3">
+                        Parental Consent Status: <span class="badge bg-{{ profile.parental_consent_status }}">{{ profile.parental_consent_status|capfirst }}</span>
+                    </div>
+                    {% endif %}
                     <form method="post" novalidate>
                         {% csrf_token %}
                         <!-- Football Field UI for positions -->
@@ -56,7 +61,12 @@
                         {% for field in form %}
                         {% if field.name != 'positions' %}
                         <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                                {% if field.name in ['parent_name', 'parent_email'] %}
+                                    <span class="text-danger">{% if profile.user.date_of_birth and profile.user.date_of_birth|date:'Y' %}{% with today=now|date:'Y' %}{% if today|add:'-18' < profile.user.date_of_birth|date:'Y' %}*{% endif %}{% endwith %}{% endif %}</span>
+                                {% endif %}
+                            </label>
                             {{ field }}
                             {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>

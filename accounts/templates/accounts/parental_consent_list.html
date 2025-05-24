@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <h2>Parental Consent Requests</h2>
+  <form method="get" class="mb-3">
+    <label for="status">Filter by status:</label>
+    <select name="status" id="status" onchange="this.form.submit()">
+      <option value="">All</option>
+      <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="granted" {% if status == 'granted' %}selected{% endif %}>Granted</option>
+      <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
+    </select>
+  </form>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Parent Name</th>
+        <th>Parent Email</th>
+        <th>Status</th>
+        <th>Requested At</th>
+        <th>Responded At</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in requests %}
+      <tr>
+        <td>{{ req.player.get_full_name }} ({{ req.player.email }})</td>
+        <td>{{ req.parent_name }}</td>
+        <td>{{ req.parent_email }}</td>
+        <td><span class="badge bg-{{ req.status }}">{{ req.get_status_display }}</span></td>
+        <td>{{ req.requested_at|date:"Y-m-d H:i" }}</td>
+        <td>{% if req.responded_at %}{{ req.responded_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+        <td><a href="{% url 'accounts:consent_verify' req.token %}" target="_blank">View</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-center">No requests found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %} 

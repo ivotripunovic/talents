@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="mb-3">Parental Consent Request</h3>
+          <p><strong>Player:</strong> {{ consent.player.get_full_name }} ({{ consent.player.email }})</p>
+          <p><strong>Parent/Guardian:</strong> {{ consent.parent_name }} ({{ consent.parent_email }})</p>
+          <p><strong>Status:</strong> <span class="badge bg-{{ consent.status }}">{{ consent.get_status_display }}</span></p>
+          {% if message %}
+            <div class="alert alert-info">{{ message }}</div>
+          {% endif %}
+          {% if consent.status == 'pending' and not message %}
+            <form method="post">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <button type="submit" class="btn btn-success">Submit</button>
+            </form>
+          {% elif consent.status != 'pending' %}
+            <div class="alert alert-success">This request has already been {{ consent.status }}.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 
