@@ -49,10 +49,8 @@ class ParentalConsentWorkflowTests(TestCase):
         user.save()
         self.client.login(username='underage2@example.com', password='testpass123')
         # Print and assert user is underage
-        print('TEST DEBUG: user.date_of_birth:', user.date_of_birth)
         today = date.today()
         age = today.year - user.date_of_birth.year - ((today.month, today.day) < (user.date_of_birth.month, user.date_of_birth.day))
-        print('TEST DEBUG: calculated age:', age)
         assert age < 18, f"User should be underage, got age {age}"
         url = reverse('accounts:player_profile_update')
         resp = self.client.post(url, {
@@ -67,8 +65,6 @@ class ParentalConsentWorkflowTests(TestCase):
             'parent_email': self.parent_email,
             'parent_phone': self.parent_phone,
         })
-        print('TEST DEBUG: response status code:', resp.status_code)
-        print('TEST DEBUG: response content:', resp.content.decode()[:500])
         consents = ParentalConsentRequest.objects.filter(player=user)
         self.assertEqual(consents.count(), 1)
         consent = consents.first()

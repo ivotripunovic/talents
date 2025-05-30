@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load player_extras %}
 
 {% block title %}Player Profile{% endblock %}
 
@@ -70,6 +71,18 @@
                         <label class="form-label text-muted">Weight</label>
                         <p class="mb-0">{{ profile.weight|default:user.player_profile.weight|default:"Not specified" }} kg</p>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Club</label>
+                        <p class="mb-0">{{ profile.club|default:user.player_profile.club|default:"Not specified" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Languages</label>
+                        <p class="mb-0">{{ profile.languages|default:user.player_profile.languages|default:"Not specified" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Medical Info</label>
+                        <p class="mb-0">{{ profile.medical_info|default:user.player_profile.medical_info|default:"Not specified" }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -79,6 +92,21 @@
                 <div class="card-body">
                     <h5 class="card-title mb-4">Bio</h5>
                     <p class="card-text">{{ user.player_profile.bio|default:"No bio available"|linebreaks }}</p>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Achievements</h5>
+                    {% if profile.achievements %}
+                        <ul>
+                            {% for achievement in profile.achievements|split_by_comma %}
+                                <li>{{ achievement }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No achievements listed.</p>
+                    {% endif %}
                 </div>
             </div>
             

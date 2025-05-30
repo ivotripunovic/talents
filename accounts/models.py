@@ -178,6 +178,9 @@ class ScoutProfile(models.Model):
 
 class ManagerProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='manager_profile')
+    organization = models.CharField(max_length=100, blank=True)
+    experience_years = models.PositiveIntegerField(default=0)
+    specialization = models.CharField(max_length=100, blank=True)
     department = models.CharField(max_length=100, blank=True)
     responsibilities = models.TextField(blank=True)
     
@@ -199,12 +202,19 @@ class ClubProfile(models.Model):
     founded_year = models.PositiveIntegerField(null=True, blank=True)
     location = models.CharField(max_length=200, blank=True)
     league = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    stadium_name = models.CharField(max_length=100, blank=True)
+    stadium_capacity = models.PositiveIntegerField(null=True, blank=True)
+    official_website = models.URLField(blank=True)
     
     def __str__(self):
         return f"Club Profile - {self.club_name}"
 
 class FanProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='fan_profile')
+    favorite_team = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
     favorite_club = models.CharField(max_length=100, blank=True)
     membership_type = models.CharField(
         max_length=20,
@@ -224,21 +234,25 @@ class EmailVerificationToken(models.Model):
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
-    is_used = models.BooleanField(default=False)
+    used = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
             # Set expiration to 7 days from creation
-            self.expires_at = timezone.now() + timezone.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
+            from datetime import timedelta
+            self.expires_at = timezone.now() + timedelta(days=7)
         super().save(*args, **kwargs)
 
     def is_valid(self):
-        return not self.is_used and timezone.now() <= self.expires_at
+        return not self.used and timezone.now() <= self.expires_at
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at
 
     @classmethod
     def generate_token(cls, user):
         # Delete any existing unused tokens for this user
-        cls.objects.filter(user=user, is_used=False).delete()
+        cls.objects.filter(user=user, used=False).delete()
         # Create new token
         return cls.objects.create(user=user)
 

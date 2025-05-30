@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from .forms import (
     PlayerRegistrationForm, CoachRegistrationForm, ScoutRegistrationForm,
     ManagerRegistrationForm, TrainerRegistrationForm, ClubRegistrationForm,
-    FanRegistrationForm, PlayerProfileUpdateForm
+    FanRegistrationForm, PlayerProfileUpdateForm, ClubProfileUpdateForm
 )
 from django.template import TemplateDoesNotExist
 from django.contrib import messages
@@ -243,7 +243,7 @@ class ScoutProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = ScoutProfile
     template_name = 'accounts/profile/scout_update.html'
     fields = ['organization', 'regions_covered', 'years_of_experience']
-    success_url = reverse_lazy('accounts:profile')
+    success_url = reverse_lazy('accounts:scout_profile')
 
     def get_object(self, queryset=None):
         return self.request.user.scout_profile
@@ -256,7 +256,7 @@ class PlayerProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = PlayerProfile
     template_name = 'accounts/profile/player_update.html'
     form_class = PlayerProfileUpdateForm
-    success_url = reverse_lazy('accounts:profile')
+    success_url = reverse_lazy('accounts:player_profile')
 
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -279,8 +279,8 @@ class PlayerProfileUpdateView(LoginRequiredMixin, UpdateView):
 class CoachProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = CoachProfile
     template_name = 'accounts/profile/coach_update.html'
-    fields = ['current_club', 'coaching_license', 'years_of_experience', 'preferred_formation', 'coaching_philosophy']
-    success_url = reverse_lazy('accounts:profile')
+    fields = ['specialization', 'experience_years', 'certifications']
+    success_url = reverse_lazy('accounts:coach_profile')
 
     def get_object(self, queryset=None):
         return self.request.user.coach_profile
@@ -318,8 +318,8 @@ class TrainerProfileUpdateView(LoginRequiredMixin, UpdateView):
 class ClubProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = ClubProfile
     template_name = 'accounts/profile/club_update.html'
-    fields = ['founded_year', 'league', 'stadium', 'website', 'description', 'achievements']
-    success_url = reverse_lazy('accounts:profile')
+    form_class = ClubProfileUpdateForm
+    success_url = reverse_lazy('accounts:club_profile')
 
     def get_object(self, queryset=None):
         return self.request.user.club_profile
@@ -343,25 +343,21 @@ class FanProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 def verify_email(request, token):
     verification = get_object_or_404(EmailVerificationToken, token=token)
-    
     if verification.is_valid():
         user = verification.user
         user.is_active = True
         user.email_verified = True
         user.save()
-        
-        verification.is_used = True
+        verification.used = True
         verification.save()
-        
-        login(request, user)
         messages.success(request, 'Your email has been verified successfully!')
-        return redirect('accounts:profile')
-    else:
-        if verification.is_used:
-            messages.error(request, 'This verification link has already been used.')
-        else:
-            messages.error(request, 'This verification link has expired.')
         return redirect('accounts:login')
+    else:
+        if verification.used:
+            error_message = 'This verification link has already been used.'
+        else:
+            error_message = 'This verification link has expired.'
+        return render(request, 'accounts/email/verification_error.html', {'error_message': error_message}, status=400)
 
 def consent_verify_view(request, token):
     consent = get_object_or_404(ParentalConsentRequest, token=token)

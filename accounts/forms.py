@@ -195,6 +195,20 @@ class ScoutRegistrationForm(BaseRegistrationForm):
         return user
 
 class ManagerRegistrationForm(BaseRegistrationForm):
+    organization = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    experience_years = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    specialization = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
     department = forms.CharField(
         max_length=100,
         required=False,
@@ -206,7 +220,7 @@ class ManagerRegistrationForm(BaseRegistrationForm):
     )
 
     class Meta(BaseRegistrationForm.Meta):
-        fields = BaseRegistrationForm.Meta.fields + ('department', 'responsibilities')
+        fields = BaseRegistrationForm.Meta.fields + ('organization', 'experience_years', 'specialization', 'department', 'responsibilities')
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -215,6 +229,9 @@ class ManagerRegistrationForm(BaseRegistrationForm):
             user.save()
             # Update the profile created by the signal
             profile = user.manager_profile
+            profile.organization = self.cleaned_data.get('organization', '')
+            profile.experience_years = self.cleaned_data.get('experience_years', 0)
+            profile.specialization = self.cleaned_data.get('specialization', '')
             profile.department = self.cleaned_data.get('department', '')
             profile.responsibilities = self.cleaned_data.get('responsibilities', '')
             profile.save()
@@ -270,9 +287,32 @@ class ClubRegistrationForm(BaseRegistrationForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
+    country = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    city = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    stadium_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    stadium_capacity = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    official_website = forms.URLField(
+        required=False,
+        widget=forms.URLInput(attrs={'class': 'form-control'})
+    )
 
     class Meta(BaseRegistrationForm.Meta):
-        fields = BaseRegistrationForm.Meta.fields + ('club_name', 'founded_year', 'location', 'league')
+        fields = BaseRegistrationForm.Meta.fields + ('club_name', 'founded_year', 'location', 'league', 'country', 'city', 'stadium_name', 'stadium_capacity', 'official_website')
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -285,10 +325,25 @@ class ClubRegistrationForm(BaseRegistrationForm):
             profile.founded_year = self.cleaned_data.get('founded_year')
             profile.location = self.cleaned_data.get('location', '')
             profile.league = self.cleaned_data.get('league', '')
+            profile.country = self.cleaned_data.get('country', '')
+            profile.city = self.cleaned_data.get('city', '')
+            profile.stadium_name = self.cleaned_data.get('stadium_name', '')
+            profile.stadium_capacity = self.cleaned_data.get('stadium_capacity')
+            profile.official_website = self.cleaned_data.get('official_website', '')
             profile.save()
         return user
 
 class FanRegistrationForm(BaseRegistrationForm):
+    favorite_team = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    country = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
     favorite_club = forms.CharField(
         max_length=100,
         required=False,
@@ -301,7 +356,7 @@ class FanRegistrationForm(BaseRegistrationForm):
     )
 
     class Meta(BaseRegistrationForm.Meta):
-        fields = BaseRegistrationForm.Meta.fields + ('favorite_club', 'membership_type')
+        fields = BaseRegistrationForm.Meta.fields + ('favorite_team', 'country', 'favorite_club', 'membership_type')
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -310,6 +365,8 @@ class FanRegistrationForm(BaseRegistrationForm):
             user.save()
             # Update the profile created by the signal
             profile = user.fan_profile
+            profile.favorite_team = self.cleaned_data.get('favorite_team', '')
+            profile.country = self.cleaned_data.get('country', '')
             profile.favorite_club = self.cleaned_data.get('favorite_club', '')
             profile.membership_type = self.cleaned_data.get('membership_type', 'REGULAR')
             profile.save()
@@ -320,12 +377,22 @@ class PlayerProfileUpdateForm(forms.ModelForm):
     parent_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     parent_email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-control'}))
     parent_phone = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    achievements = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
+    club = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    languages = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    medical_info = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
+    social_links = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
 
     class Meta:
         model = PlayerProfile
-        fields = ['country', 'city', 'age', 'height', 'weight', 'preferred_foot', 'positions', 'parent_name', 'parent_email', 'parent_phone']
+        fields = ['country', 'city', 'age', 'height', 'weight', 'preferred_foot', 'positions', 'parent_name', 'parent_email', 'parent_phone', 'achievements', 'club', 'languages', 'medical_info', 'social_links']
         widgets = {
             'preferred_foot': forms.Select(choices=[('', '---'), ('LEFT', 'Left'), ('RIGHT', 'Right'), ('BOTH', 'Both')]),
+            'achievements': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'club': forms.TextInput(attrs={'class': 'form-control'}),
+            'languages': forms.TextInput(attrs={'class': 'form-control'}),
+            'medical_info': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'social_links': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -366,6 +433,19 @@ class PlayerProfileUpdateForm(forms.ModelForm):
             profile.set_positions([p for p in positions_str.split(',') if p])
         else:
             profile.set_positions([])
+        # Handle social_links as JSON
+        import json
+        social_links_str = self.cleaned_data.get('social_links')
+        if social_links_str:
+            if isinstance(social_links_str, dict):
+                profile.social_links = social_links_str
+            else:
+                try:
+                    profile.social_links = json.loads(social_links_str)
+                except Exception:
+                    profile.social_links = None
+        else:
+            profile.social_links = None
         if commit:
             profile.save()
             # Parental consent workflow
@@ -386,4 +466,23 @@ class PlayerProfileUpdateForm(forms.ModelForm):
                         request=self.request
                     )
                 profile.save()
-        return profile 
+        return profile
+
+class ClubProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = ClubProfile
+        fields = [
+            'club_name', 'founded_year', 'location', 'league', 'country', 'city',
+            'stadium_name', 'stadium_capacity', 'official_website'
+        ]
+        widgets = {
+            'club_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'founded_year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'league': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'stadium_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'stadium_capacity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'official_website': forms.URLInput(attrs={'class': 'form-control'}),
+        } 
